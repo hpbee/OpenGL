@@ -82,15 +82,31 @@ int main(void)
 		std::cout << "glewInit Error\n";
 
 	std::cout << glGetString(GL_VERSION);
-	float positions[6] = { -0.5f, -0.5f, 0.5f, -0.5f, 0.3f, 0.3f };
+	float positions[] = 
+		{ 
+		-0.5f, -0.5f, //0
+		 0.5f, -0.5f, //1
+		 0.5f, 0.5f, //2
+		-0.5f, 0.5f //3
+		};
+	unsigned int indices[] =
+	{
+		0,1,2,
+		2,3,0
+	}; //Index buffer we can use to not duplicate vertices again
 	//Define vertex buffer
 	unsigned int buffer;
 	glGenBuffers(1, &buffer);
 	glBindBuffer(GL_ARRAY_BUFFER, buffer);//By binding OpenGL can work with this buffer now
-	glBufferData(GL_ARRAY_BUFFER, 6*sizeof(float), positions, GL_STATIC_DRAW);//Adding data to the buffer
+	glBufferData(GL_ARRAY_BUFFER, 8*sizeof(float), positions, GL_STATIC_DRAW);//Adding data to the buffer
 
 	glEnableVertexAttribArray(0);
 	glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(float) * 2, 0);//specify attributes for each vertex
+
+	unsigned int ibo; //Index buffer object
+	glGenBuffers(1, &ibo);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo);//By binding OpenGL can work with this ibo now
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, 6 * sizeof(unsigned int), indices, GL_STATIC_DRAW);//Adding data to the buffer
 	
 	//Write shader source code
 	std::string vertexShader, fragmentShader;
@@ -104,13 +120,8 @@ int main(void)
 		/* Render here */
 		glClear(GL_COLOR_BUFFER_BIT);
 
-		glDrawArrays(GL_TRIANGLES, 0, 3);
-
-		/*glBegin(GL_TRIANGLES);
-		glVertex2f(-0.5f, -0.5f);
-		glVertex2f(0.5f, -0.5f);
-		glVertex2f(0.3f, 0.3f);
-		glEnd();*/
+		//glDrawArrays(GL_TRIANGLES, 0, 3);
+		glDrawElements(GL_TRIANGLES,6,GL_UNSIGNED_INT,NULL);//Draw triangles from indices bound to gl_element_array_buffer
 
 		/* Swap front and back buffers */
 		glfwSwapBuffers(window);
