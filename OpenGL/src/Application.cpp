@@ -13,16 +13,16 @@ bool glLogError(std::string function, std::string file, long line)
 	if (GLenum error = glGetError())
 	{
 		std::cout << "OpenGL error : " << error << " in line " << line << " in function " << function << " in file " << file << "\n";
-		return false;
+		return true;
 	}
-	return true;
+	return false;
 }
 
-#define ASSERT(x) if(!x) __debugbreak()
+#define ASSERT(x) if(x==false) __debugbreak()
 
 #define GL_CALL(x) glClearErrors();\
 	x;\
-	ASSERT(glLogError(#x,__FILE__,__LINE__))
+	ASSERT(!glLogError(#x,__FILE__,__LINE__))
 
 void parseShader(std::string filePath, std::string& vertexShader, std::string& fragmentShader)
 {
@@ -135,11 +135,24 @@ int main(void)
 
 	unsigned int shaders = CreateShader(vertexShader, fragmentShader);
 	glUseProgram(shaders);
+	//Setting values for u_Color defined in shader code.
+	int u_ColorLocation = glGetUniformLocation(shaders, "u_Color");//Get uniform color location
+	ASSERT(u_ColorLocation != -1);//assert location is found
+	float d = 0.01f;
+	float c[3]{ 0.6, 0.3, 0.8 };
+	float incr[3] = { 0.0005, 0.0002, 0.0003 };
 	/* Loop until the user closes the window */
 	while (!glfwWindowShouldClose(window))
 	{
 		/* Render here */
 		glClear(GL_COLOR_BUFFER_BIT);
+		
+		GL_CALL(glUniform4f(u_ColorLocation, c[0], c[1], c[2], 1.0f));
+		for (int i = 0; i < 3; i++)
+		{
+			if ((c[i] + incr[i]) > 1.0 || (c[i] + incr[i])<0) incr[i] *= -1;
+			c[i] += incr[i];
+		}
 
 		//glDrawArrays(GL_TRIANGLES, 0, 3);
 		GL_CALL(glDrawElements(GL_TRIANGLES,6,GL_UNSIGNED_INT,NULL));//Draw triangles from indices bound to gl_element_array_buffer
@@ -155,6 +168,6 @@ int main(void)
 	//glDetachShader(program, fs);
 
 	glfwTerminate();
-	getchar();
+	//getchar();
 	return 0;
 }
