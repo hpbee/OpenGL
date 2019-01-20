@@ -3,6 +3,27 @@
 #include <GLFW/glfw3.h>
 #include <fstream>
 #include <string>
+
+void glClearErrors()
+{
+	while (glGetError() != GL_NO_ERROR);
+}
+bool glLogError(std::string function, std::string file, long line)
+{
+	if (GLenum error = glGetError())
+	{
+		std::cout << "OpenGL error : " << error << " in line " << line << " in function " << function << " in file " << file << "\n";
+		return false;
+	}
+	return true;
+}
+
+#define ASSERT(x) if(!x) __debugbreak()
+
+#define GL_CALL(x) glClearErrors();\
+	x;\
+	ASSERT(glLogError(#x,__FILE__,__LINE__))
+
 void parseShader(std::string filePath, std::string& vertexShader, std::string& fragmentShader)
 {
 	std::ifstream stream(filePath);
@@ -121,7 +142,8 @@ int main(void)
 		glClear(GL_COLOR_BUFFER_BIT);
 
 		//glDrawArrays(GL_TRIANGLES, 0, 3);
-		glDrawElements(GL_TRIANGLES,6,GL_UNSIGNED_INT,NULL);//Draw triangles from indices bound to gl_element_array_buffer
+		GL_CALL(glDrawElements(GL_TRIANGLES,6,GL_UNSIGNED_INT,NULL));//Draw triangles from indices bound to gl_element_array_buffer
+		//while (GLenum error = glGetError()) std::cout << "Error : " << error << std::endl;
 
 		/* Swap front and back buffers */
 		glfwSwapBuffers(window);
@@ -133,5 +155,6 @@ int main(void)
 	//glDetachShader(program, fs);
 
 	glfwTerminate();
+	getchar();
 	return 0;
 }
