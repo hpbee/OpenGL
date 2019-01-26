@@ -88,6 +88,11 @@ int main(void)
 	if (!glfwInit())
 		return -1;
 
+	//Create GLFW window with core profile unlike the default compatability profile
+	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);//Change opengl version being used
+	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+	glfwWindowHint(GLFW_OPENGL_PROFILE,GLFW_OPENGL_CORE_PROFILE);//
+
 	/* Create a windowed mode window and its OpenGL context */
 	window = glfwCreateWindow(640, 480, "Hello World", NULL, NULL);
 	if (!window)
@@ -115,6 +120,12 @@ int main(void)
 		0,1,2,
 		2,3,0
 	}; //Index buffer we can use to not duplicate vertices again
+
+	//Create vertex array to be used with core profile
+	unsigned int vao;
+	GL_CALL(glGenVertexArrays(1, &vao));
+	GL_CALL(glBindVertexArray(vao));
+
 	//Define vertex buffer
 	unsigned int buffer;
 	glGenBuffers(1, &buffer);
@@ -123,6 +134,7 @@ int main(void)
 
 	glEnableVertexAttribArray(0);
 	glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(float) * 2, 0);//specify attributes for each vertex
+	//		and bind the index (0) of the current vertex array (vao) to the currently bound array buffer (buffer)
 
 	unsigned int ibo; //Index buffer object
 	glGenBuffers(1, &ibo);
@@ -141,12 +153,29 @@ int main(void)
 	float d = 0.01f;
 	float c[3]{ 0.6, 0.3, 0.8 };
 	float incr[3] = { 0.0005, 0.0002, 0.0003 };
+
+	//Unbind buffers and shaders
+	GL_CALL(glBindVertexArray(0));
+	GL_CALL(glUseProgram(0));
+	GL_CALL(glBindBuffer(GL_ARRAY_BUFFER, 0));
+	GL_CALL(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0));
+
 	/* Loop until the user closes the window */
 	while (!glfwWindowShouldClose(window))
 	{
 		/* Render here */
 		glClear(GL_COLOR_BUFFER_BIT);
-		
+
+		//Bind shaders and buffers
+		GL_CALL(glUseProgram(shaders));
+		/*GL_CALL(glBindBuffer(GL_ARRAY_BUFFER, buffer));
+		//If any changes in occur in vertices ,we have to do this. To avoid this we can use different vertex arrays
+		//	for different vertices and bind the vertex arrays as needed.
+		glEnableVertexAttribArray(0);
+		glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(float) * 2, 0);//This binds the specification of the vertex to vertex array that's enabled.*/
+		GL_CALL(glBindVertexArray(vao));
+		GL_CALL(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo));
+
 		GL_CALL(glUniform4f(u_ColorLocation, c[0], c[1], c[2], 1.0f));
 		for (int i = 0; i < 3; i++)
 		{
