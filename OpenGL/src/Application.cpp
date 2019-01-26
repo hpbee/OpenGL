@@ -6,6 +6,7 @@
 #include "renderer.h"
 #include "VertexBuffer.h"
 #include "IndexBuffer.h"
+#include "VertexArray.h"
 
 
 void parseShader(std::string filePath, std::string& vertexShader, std::string& fragmentShader)
@@ -106,16 +107,12 @@ int main(void)
 		}; //Index buffer we can use to not duplicate vertices again
 
 		//Create vertex array to be used with core profile
-		unsigned int vao;
-		GL_CALL(glGenVertexArrays(1, &vao));
-		GL_CALL(glBindVertexArray(vao));
-
+		VertexArray va;
 		//Define vertex buffer
 		VertexBuffer vb(positions, 8 * sizeof(float));
-
-		glEnableVertexAttribArray(0);
-		glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(float) * 2, 0);//specify attributes for each vertex
-		//		and bind the index (0) of the current vertex array (vao) to the currently bound array buffer (buffer)
+		VertexBufferLayout layout;
+		layout.Push<float>(2);
+		va.AddBuffer(vb,layout);
 
 		IndexBuffer ibo(indices, 6); //Index buffer object
 
@@ -134,10 +131,10 @@ int main(void)
 		float incr[3] = { 0.0005, 0.0002, 0.0003 };
 
 		//Unbind buffers and shaders
-		GL_CALL(glBindVertexArray(0));
+		va.Unbind();
 		GL_CALL(glUseProgram(0));
-		GL_CALL(glBindBuffer(GL_ARRAY_BUFFER, 0));
-		GL_CALL(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0));
+		vb.Unbind();
+		ibo.Unbind();
 
 		/* Loop until the user closes the window */
 		while (!glfwWindowShouldClose(window))
@@ -147,12 +144,8 @@ int main(void)
 
 			//Bind shaders and buffers
 			GL_CALL(glUseProgram(shaders));
-			/*GL_CALL(glBindBuffer(GL_ARRAY_BUFFER, buffer));
-			//If any changes in occur in vertices ,we have to do this. To avoid this we can use different vertex arrays
-			//	for different vertices and bind the vertex arrays as needed.
-			glEnableVertexAttribArray(0);
-			glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(float) * 2, 0);//This binds the specification of the vertex to vertex array that's enabled.*/
-			GL_CALL(glBindVertexArray(vao));
+
+			va.Bind();
 			ibo.Bind();
 
 			GL_CALL(glUniform4f(u_ColorLocation, c[0], c[1], c[2], 1.0f));
